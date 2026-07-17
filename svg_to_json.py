@@ -40,6 +40,56 @@ def get_color(attr):
     return [0.1, 0.1, 0.1]
 
 
+def transform_points(points, tx, ty, scale, angle):
+    angle = math.radians(angle)
+
+    cos_a = math.cos(angle)
+    sin_a = math.sin(angle)
+
+    transformed = []
+
+    for x, y in points:
+
+        # Escalar
+        x *= scale
+        y *= scale
+
+        # Rotar
+        xr = x * cos_a - y * sin_a
+        yr = x * sin_a + y * cos_a
+
+        # Trasladar
+        xr += tx
+        yr += ty
+
+        transformed.append([
+            round(xr, 2),
+            round(yr, 2)
+        ])
+
+    return transformed
+
+
+BOUQUET = [
+    #     nombre           x     y   escala rotación
+    ("centro",              0,    0, 1.00,   0),
+
+    ("izquierda",         -55,   25, 0.92, -10),
+    ("derecha",            55,   25, 0.92,  10),
+
+    ("izquierda_arriba", -110,   70, 0.88, -18),
+    ("derecha_arriba",    110,   70, 0.88,  18),
+
+    ("abajo_izquierda",   -30,   55, 0.82,  -5),
+    ("abajo_derecha",      30,   55, 0.82,   5),
+
+    ("extrema_izquierda",-30, 90, 0.76, -5),
+    ("extrema_derecha",   32, 93, 0.76,  5),
+
+    ("frente_izquierda",  -80, 105, 0.78, -12),
+    ("frente_derecha",     80, 107, 0.78,  12),
+]
+
 try:
     paths, attributes = svg2paths("input/flower.svg")
     print(f"Loaded {len(paths)} vectors successfully.")
@@ -49,34 +99,57 @@ except Exception as e:
 
 result = {"coordenadas": [], "color": []}
 
-for i, (path, attr) in enumerate(zip(paths, attributes)):
-    # Break discontinuous paths into continuous pieces to prevent distortion
-    subpaths = path.continuous_subpaths() if hasattr(path, "continuous_subpaths") else [path]
+for name, tx, ty, scale, rotation in BOUQUET:
 
-    for subpath in subpaths:
-        puntos = []
-        for segment in subpath:
-            for t in np.linspace(0, 1, SAMPLES_PER_SEGMENT):
-                try:
-                    point = segment.point(t)
-                    x = round(float(point.real), 2)
-                    y = round(float(point.imag), 2)
-                    punto = [x, y]
-                except Exception:
-                    continue
+    for path, attr in zip(paths, attributes):
 
-                if not puntos:
-                    puntos.append(punto)
-                    continue
+        subpaths = (
+            path.continuous_subpaths()
+            if hasattr(path, "continuous_subpaths")
+            else [path]
+        )
 
-                dx = punto[0] - puntos[-1][0]
-                dy = punto[1] - puntos[-1][1]
-                if (dx * dx + dy * dy) ** 0.5 >= MIN_POINT_SPACING:
-                    puntos.append(punto)
+        for subpath in subpaths:
 
-        if len(puntos) > 2:  # Safe minimum for rendering a real shape polygon
-            result["coordenadas"].append(puntos)
-            result["color"].append(get_color(attr))
+            puntos = []
+
+            for segment in subpath:
+
+                for t in np.linspace(0, 1, SAMPLES_PER_SEGMENT):
+
+                    try:
+                        point = segment.point(t)
+
+                        x = float(point.real)
+                        y = float(point.imag)
+
+                        punto = [x, y]
+
+                    except Exception:
+                        continue
+
+                    if not puntos:
+                        puntos.append(punto)
+                        continue
+
+                    dx = punto[0] - puntos[-1][0]
+                    dy = punto[1] - puntos[-1][1]
+
+                    if math.sqrt(dx*dx + dy*dy) >= MIN_POINT_SPACING:
+                        puntos.append(punto)
+
+            if len(puntos) > 2:
+
+                puntos = transform_points(
+                    puntos,
+                    tx,
+                    ty,
+                    scale,
+                    rotation
+                )
+
+                result["coordenadas"].append(puntos)
+                result["color"].append(get_color(attr))
 
 with open("output/data.json", "w") as file:
     json.dump(result, file, indent=2, ensure_ascii=False)
