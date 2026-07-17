@@ -491,15 +491,32 @@
 
         def goto(x, y):
             global turtle_x, turtle_y
-            
-            # Scale coordinates
-            scale_factor = min(canvas_width, canvas_height) / 800
-            scaled_x = canvas_width // 2 + x * scale_factor * 0.8
-            scaled_y = canvas_height // 2 + y * scale_factor * 0.8
-            
+
+            bounds = turtle_data["bounds"]
+
+            width = bounds["max_x"] - bounds["min_x"]
+            height = bounds["max_y"] - bounds["min_y"]
+
+            margin = 250
+
+            scale = min(
+                (canvas_width - margin * 2) / width,
+                (canvas_height - margin * 2) / height
+            )
+
+            scaled_x = (
+                (x - bounds["min_x"]) * scale
+                + (canvas_width - width * scale) / 2
+            )
+
+            scaled_y = (
+                (y - bounds["min_y"]) * scale
+                + (canvas_height - height * scale) / 2
+            )
+
             if turtle_pen_down:
                 ctx.lineTo(scaled_x, scaled_y)
-            
+
             turtle_x = scaled_x
             turtle_y = scaled_y
 
@@ -519,6 +536,25 @@
                 if isinstance(data, bytes):
                     data = data.decode('utf-8')
                 turtle_data = json.loads(data)
+
+                # Calculate bounds for normalized drawing
+                all_x = [pt[0] for shape in turtle_data.get("coordenadas", []) for pt in shape]
+                all_y = [pt[1] for shape in turtle_data.get("coordenadas", []) for pt in shape]
+                if all_x and all_y:
+                    turtle_data["bounds"] = {
+                        "min_x": min(all_x),
+                        "max_x": max(all_x),
+                        "min_y": min(all_y),
+                        "max_y": max(all_y),
+                    }
+                else:
+                    turtle_data["bounds"] = {
+                        "min_x": 0,
+                        "max_x": 1,
+                        "min_y": 0,
+                        "max_y": 1,
+                    }
+
                 document['status'].textContent = "Listo para dibujar 💕"
                 return True
             except Exception as e:
