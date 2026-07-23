@@ -474,9 +474,6 @@
             if not (0 <= r <= 1 and 0 <= g <= 1 and 0 <= b <= 1):
                 r, g, b = 1.0, 0.2, 0.5
 
-            if abs(r - 1.0) < 0.01 and abs(g - 1.0) < 0.01 and abs(b - 1.0) < 0.01:
-                r, g, b = 1.0, 0.2, 0.5
-
             ctx.strokeStyle = f'rgb({int(r*255)}, {int(g*255)}, {int(b*255)})'
             ctx.fillStyle = f'rgb({int(r*255)}, {int(g*255)}, {int(b*255)})'
             ctx.lineWidth = 1

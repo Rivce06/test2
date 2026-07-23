@@ -1,31 +1,11 @@
-"""
-Extrae automáticamente tx, ty, scale, rotation de cada grupo <g> de un SVG
-compuesto visualmente en Inkscape/Illustrator/Figma.
-
-Flujo de trabajo:
-  1. Abrís el SVG con las 7 (u 11) flores en Inkscape.
-  2. Cada flor debe estar en su propio grupo <g>.
-  3. Movés, rotás y escalás cada grupo con el mouse hasta que quede como querés.
-  4. Guardás el SVG.
-  5. Corrés este script -> te imprime la lista BOUQUET lista para pegar en tu
-     script principal.
-
-No necesitas escribir NINGÚN número a mano.
-"""
-
 import re
 import numpy as np
 from lxml import etree
 
 
 def parse_transform(transform_str):
-    """Convierte un string transform="..." de SVG en una matriz 3x3
-    (coordenadas homogéneas). Soporta translate, rotate, matrix y scale,
-    encadenados en cualquier orden (como los escribe Inkscape)."""
-
     M = np.identity(3)
 
-    # Cada función de transform: nombre(args...)
     for name, args in re.findall(r"(\w+)\s*\(([^)]*)\)", transform_str):
         nums = [float(x) for x in re.split(r"[,\s]+", args.strip()) if x]
 
@@ -64,11 +44,7 @@ def parse_transform(transform_str):
 
 
 def decompose(M):
-    """Descompone una matriz afín (traslación + rotación + escala uniforme)
-    en tx, ty, scale, rotation_deg -- exactamente lo que usa transform_points().
 
-    También detecta si el grupo fue volteado en espejo (flip horizontal),
-    algo muy común al armar composiciones simétricas en Inkscape (Ctrl+H)."""
     a, c, e = M[0]
     b, d, f = M[1]
 
@@ -76,7 +52,6 @@ def decompose(M):
     flip = det < 0
 
     if flip:
-        # Deshacemos el flip para poder leer el ángulo de rotación "puro"
         a, b = -a, -b
 
     scale = round(float(np.hypot(a, b)), 4)
@@ -92,7 +67,6 @@ def main(svg_path, group_ids=None):
     root = tree.getroot()
     ns = {"svg": "http://www.w3.org/2000/svg"}
 
-    # Transform acumulado de los <g> padres (ej: la capa "layer1")
     def accumulated_transform(elem):
         M = np.identity(3)
         node = elem
@@ -108,25 +82,36 @@ def main(svg_path, group_ids=None):
 
     groups = root.findall(".//svg:g[@transform]", ns)
 
-    # Ignorar la(s) capa(s) de Inkscape (inkscape:groupmode="layer"):
-    # no son flores, son el contenedor general.
+    # Ignorar las capas generales de Inkscape
     layer_ns = "{http://www.inkscape.org/namespaces/inkscape}groupmode"
     groups = [g for g in groups if g.get(layer_ns) != "layer"]
 
     if group_ids:
         groups = [g for g in groups if g.get("id") in group_ids]
 
-    any_flip = False
-    print("BOUQUET = [")
-    for i, g in enumerate(groups, start=1):
+    print("OBJECTS = [")
+    for g in groups:
         M = accumulated_transform(g)
-        tx, ty, scale, rotation, flip = decompose(M)
-        gid = g.get("id", f"grupo_{i}")
-        flip_note = "  <-- volteada en espejo (ver nota abajo)" if flip else ""
-        any_flip = any_flip or flip
-        print(f'    ("flower_{i}", {tx:>10}, {ty:>10}, {scale:>6}, {rotation:>7}),  # {gid}{flip_note}')
-    print("]")
 
+        # Extract the 6 exact affine values:
+        # M[0] is [a, c, e]
+        # M[1] is [b, d, f]
+        a, c, e = M[0]
+        b, d, f = M[1]
+
+        gid = g.get("id", "unnamed")
+        
+        # Identify if the element is the wrapper or a flower
+        obj_type = "wrapper" if "wrapper" in gid.lower() or gid == "g1" else "flower"
+
+        print(
+            f'    ("{obj_type}", "{gid}", '
+            f"{a:.6f}, {b:.6f}, {c:.6f}, {d:.6f}, {e:.3f}, {f:.3f}),"
+        )
+    print("]")
+    
+    any_flip = False
+    
     if any_flip:
         print(
             "\n# NOTA: una o más flores están volteadas en espejo horizontal en el SVG.\n"
@@ -138,5 +123,5 @@ def main(svg_path, group_ids=None):
 
 if __name__ == "__main__":
     import sys
-    svg_file = sys.argv[1] if len(sys.argv) > 1 else "input/composicion.svg"
+    svg_file = sys.argv[1] if len(sys.argv) > 1 else "input/bouquet.svg"
     main(svg_file)
