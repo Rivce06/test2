@@ -40,27 +40,12 @@ def get_color(attr):
     return [0.1, 0.1, 0.1]
 
 
-def transform_points(points, tx, ty, scale, angle):
-    angle = math.radians(angle)
-
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
-
+def transform_points(points, a, b, c, d, e, f):
     transformed = []
 
     for x, y in points:
-
-        # Escalar
-        x *= scale
-        y *= scale
-
-        # Rotar
-        xr = x * cos_a - y * sin_a
-        yr = x * sin_a + y * cos_a
-
-        # Trasladar
-        xr += tx
-        yr += ty
+        xr = a * x + c * y + e
+        yr = b * x + d * y + f
 
         transformed.append([
             round(xr, 2),
@@ -70,20 +55,55 @@ def transform_points(points, tx, ty, scale, angle):
     return transformed
 
 BOUQUET = [
-    # --- LAYER 1: BACK CENTER (Drawn first) ---
-    ("flower_1",     0.0,   -25.0,   1.0,   1.0,    0.0),  # Top center apex (g25846)
+    ("flower1_g25846", 1.0, 0.0, 0.0, 1.0, 39.532, -11.889),
 
-    # --- LAYER 2: UPPER SIDES ---
-    ("flower_2",   -45.0,    -5.0,   1.0,   1.0,  -10.0),  # Upper left (g8649)
-    ("flower_3",    45.0,    -5.0,  -1.0,   1.0,   10.0),  # Upper right - MIRRORED (g17298)
+    ("flower2_g8649",
+        1.000887,
+        -0.111368,
+        0.113896,
+        0.981345,
+        2.348,
+        14.207),
 
-    # --- LAYER 3: LOWER WINGS ---
-    ("flower_4",   -85.0,    20.0,   1.0,   1.0,  -20.0),  # Lower far left (g34596)
-    ("flower_5",    85.0,    20.0,  -1.0,   1.0,   20.0),  # Lower far right - MIRRORED (g43245)
+    ("flower3_g17298",
+        -1.000887,
+        -0.111368,
+        -0.113896,
+        0.981345,
+        297.705,
+        16.607),
 
-    # --- LAYER 4: FRONT CENTER (Drawn last) ---
-    ("flower_6",   -25.0,    35.0,   1.0,   1.0,   -5.0),  # Front left face (g51894)
-    ("flower_7",    25.0,    35.0,   1.0,   1.0,    5.0),  # Front right face (g60543)
+    ("flower4_g34596",
+        0.950514,
+        -0.332717,
+        0.330803,
+        0.930902,
+        -45.646,
+        75.153),
+
+    ("flower5_g43245",
+        -0.950514,
+        -0.332717,
+        -0.330803,
+        0.930902,
+        347.600,
+        70.953),
+
+    ("flower6_g51894",
+        0.987515,
+        0.157522,
+        -0.157522,
+        0.987515,
+        88.451,
+        26.810),
+
+    ("flower7_g60543",
+        0.985696,
+        -0.168536,
+        0.168536,
+        0.985696,
+        4.977,
+        73.946),
 ]
 
 try:
@@ -95,7 +115,7 @@ except Exception as e:
 
 result = {"coordenadas": [], "color": []}
 
-for name, tx, ty, scale_x, scale_y, rotation in BOUQUET:
+for name, a, b, c, d, e, f in BOUQUET:
 
     for path, attr in zip(paths, attributes):
 
@@ -135,13 +155,14 @@ for name, tx, ty, scale_x, scale_y, rotation in BOUQUET:
                         puntos.append(punto)
 
             if len(puntos) > 2:
-
                 puntos = transform_points(
                     puntos,
-                    tx,
-                    ty,
-                    scale = scale_x,
-                    rotation
+                    a,
+                    b,
+                    c,
+                    d,
+                    e,
+                    f
                 )
 
                 result["coordenadas"].append(puntos)
