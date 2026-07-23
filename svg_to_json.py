@@ -69,25 +69,21 @@ def transform_points(points, tx, ty, scale, angle):
 
     return transformed
 
-
 BOUQUET = [
-    #     nombre           x     y   escala rotación
-    ("centro",              0,    0, 1.00,   0),
+    # --- LAYER 1: BACK CENTER (Drawn first) ---
+    ("flower_1",     0.0,   -25.0,   1.0,   1.0,    0.0),  # Top center apex (g25846)
 
-    ("izquierda",         -55,   25, 0.92, -10),
-    ("derecha",            55,   25, 0.92,  10),
+    # --- LAYER 2: UPPER SIDES ---
+    ("flower_2",   -45.0,    -5.0,   1.0,   1.0,  -10.0),  # Upper left (g8649)
+    ("flower_3",    45.0,    -5.0,  -1.0,   1.0,   10.0),  # Upper right - MIRRORED (g17298)
 
-    ("izquierda_arriba", -110,   70, 0.88, -18),
-    ("derecha_arriba",    110,   70, 0.88,  18),
+    # --- LAYER 3: LOWER WINGS ---
+    ("flower_4",   -85.0,    20.0,   1.0,   1.0,  -20.0),  # Lower far left (g34596)
+    ("flower_5",    85.0,    20.0,  -1.0,   1.0,   20.0),  # Lower far right - MIRRORED (g43245)
 
-    ("abajo_izquierda",   -30,   55, 0.82,  -5),
-    ("abajo_derecha",      30,   55, 0.82,   5),
-
-    ("extrema_izquierda",-30, 90, 0.76, -5),
-    ("extrema_derecha",   32, 93, 0.76,  5),
-
-    ("frente_izquierda",  -80, 105, 0.78, -12),
-    ("frente_derecha",     80, 107, 0.78,  12),
+    # --- LAYER 4: FRONT CENTER (Drawn last) ---
+    ("flower_6",   -25.0,    35.0,   1.0,   1.0,   -5.0),  # Front left face (g51894)
+    ("flower_7",    25.0,    35.0,   1.0,   1.0,    5.0),  # Front right face (g60543)
 ]
 
 try:
@@ -99,7 +95,7 @@ except Exception as e:
 
 result = {"coordenadas": [], "color": []}
 
-for name, tx, ty, scale, rotation in BOUQUET:
+for name, tx, ty, scale_x, scale_y, rotation in BOUQUET:
 
     for path, attr in zip(paths, attributes):
 
@@ -144,7 +140,7 @@ for name, tx, ty, scale, rotation in BOUQUET:
                     puntos,
                     tx,
                     ty,
-                    scale,
+                    scale = scale_x,
                     rotation
                 )
 
