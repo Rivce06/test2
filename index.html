@@ -494,25 +494,23 @@
             width = bounds["max_x"] - bounds["min_x"]
             height = bounds["max_y"] - bounds["min_y"]
 
-            margin = 60
+            margin = 10
 
             available_w = max(canvas_width - margin * 2, 10)
             available_h = max(canvas_height - margin * 2, 10)
 
-            scale = min(
-                available_w / width if width > 0 else 1,
-                available_h / height if height > 0 else 1
-            )
+            scale_x = available_w / width if width > 0 else 1
+            scale_y = available_h / height if height > 0 else 1
+            scale = min(scale_x, scale_y) * 1.5
 
-            scaled_x = (
-                (x - bounds["min_x"]) * scale
-                + (canvas_width - width * scale) / 2
-            )
+            scaled_width = width * scale
+            scaled_height = height * scale
 
-            scaled_y = (
-                (y - bounds["min_y"]) * scale
-                + (canvas_height - height * scale) / 2
-            )
+            offset_x = (canvas_width - scaled_width) / 2 - 90
+            offset_y = (canvas_height - scaled_height) / 2
+
+            scaled_x = (x - bounds["min_x"]) * scale + offset_x
+            scaled_y = (y - bounds["min_y"]) * scale + offset_y
 
             if turtle_pen_down:
                 ctx.lineTo(scaled_x, scaled_y)
